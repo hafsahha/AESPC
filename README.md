@@ -9,20 +9,45 @@ Sistem Cerdas Prediktif untuk mengoptimalkan konsumsi energi AC di Gedung FPMIPA
 3.  **Predictor Agent (`03_predictor_agent.py`):** Mengambil data terbaru, memprediksi, dan menerapkan Logika Keputusan.
 4.  **Dashboard (`streamlit_app.py`):** Antarmuka visual untuk rekomendasi aksi (ON/STANDBY) bagi penjaga gedung.
 
-## Langkah Inisiasi dan Menjalankan Proyek
-1.  **Setup Environment:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-2.  **Hasilkan Data Simulasi:**
-    ```bash
-    python src/01_data_generator.py
-    ```
-3.  **Latih Model LSTM:**
-    ```bash
-    python src/02_model_trainer.py
-    ```
-4.  **Jalankan Dashboard:**
-    ```bash
-    streamlit run dashboard/streamlit_app.py
-    ```
+## Langkah Menjalankan Proyek
+
+### 1. Setup Environment
+Install semua dependensi (termasuk joblib untuk persistence scaler):
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Generate Data Simulasi
+Buat data simulasi suhu:
+```bash
+python src/01_data_generator.py
+```
+
+
+### 3. Latih Model & Simpan Scaler
+Latih model LSTM dan simpan scaler (wajib agar prediksi konsisten):
+```bash
+python -m src.02_model_trainer
+```
+File model (`models/lstm_model.keras`) dan scaler (`models/scaler.joblib`) akan otomatis dibuat.
+
+### 4. Jalankan Dashboard Visualisasi & Agen
+Jalankan dashboard untuk monitoring dan rekomendasi aksi:
+```bash
+streamlit run dashboard/streamlit_app.py
+```
+
+
+### 5. (Opsional) Jalankan Agen Prediksi via CLI
+Untuk menjalankan agen prediksi dan logika keputusan dari terminal:
+```bash
+python -m src.predictor_agent
+```
+
+---
+
+**Catatan Penting:**
+- Pastikan urutan eksekusi: data → training → dashboard/agen.
+- File scaler (`models/scaler.joblib`) wajib ada agar prediksi real-time konsisten dengan training.
+- Jika ada error asset tidak ditemukan, ulangi langkah training.
+- Jika muncul error `ModuleNotFoundError: No module named 'src'`, jalankan perintah dengan `python -m src.02_model_trainer` atau `python -m src.predictor_agent` dari root folder proyek.

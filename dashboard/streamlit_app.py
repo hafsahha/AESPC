@@ -1,9 +1,13 @@
 # dashboard/streamlit_app.py
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import streamlit as st
 import pandas as pd
 import numpy as np
-import os
+import joblib # <--- TAMBAHKAN INI
 from tensorflow.keras.models import load_model
 from src.utils import scale_data, inverse_transform_prediction
 from src.predictor_agent import decision_logic # Import logika keputusan
@@ -13,6 +17,7 @@ st.set_page_config(page_title="Smart Pre-Cooling UPI FPMIPA C", layout="wide")
 
 DATA_FILE = os.path.join('data', 'simulated_data.csv')
 MODEL_FILE = os.path.join('models', 'lstm_model.keras')
+SCALER_FILE = os.path.join('models', 'scaler.joblib') # <--- DEFINISI SCALER FILE
 N_STEPS_IN = 48
 N_STEPS_OUT = 12 
 TARGET_COMFORT_TIME = '07:00:00' 
@@ -22,11 +27,12 @@ PRE_COOLING_WINDOW = 60
 # --- FUNGSI MEMUAT ASSET ---
 @st.cache_resource
 def load_assets():
-    """Memuat model dan data hanya sekali."""
+    """Memuat model, scaler, dan data hanya sekali."""
     try:
         model = load_model(MODEL_FILE)
+        scaler = joblib.load(SCALER_FILE) # <--- MEMUAT SCALER
     except Exception:
-        st.error(f"Gagal memuat model: {MODEL_FILE}. Pastikan 02_model_trainer.py sudah dijalankan.")
+        st.error(f"Gagal memuat Model atau Scaler. Pastikan 02_model_trainer.py sudah dijalankan.")
         return None, None, None
 
     try:
@@ -35,9 +41,7 @@ def load_assets():
         st.error(f"File data tidak ditemukan: {DATA_FILE}. Pastikan 01_data_generator.py sudah dijalankan.")
         return None, None, None
 
-    # Buat scaler dari seluruh data untuk inverse transform
-    scaler, _ = scale_data(df)
-    return model, df, scaler
+    return model, df, scaler # <--- KEMBALIKAN SCALER
 
 # --- FUNGSI PREDIKSI DAN KEPUTUSAN DASHBOARD ---
 def run_prediction_and_decision_for_ui(model, df, scaler, current_time_index):
@@ -87,7 +91,7 @@ def main():
     st.sidebar.header("Kontrol Waktu Observasi")
     
     # Filter waktu pagi hari untuk simulasi
-    sim_data_subset = df.between_time('05:00', '08:00', include_start=True, include_end=False)
+    sim_data_subset = df.between_time('05:00', '08:00')
     
     latest_time_sim = st.sidebar.select_slider(
         "Pilih Waktu Observasi (Simulasi Data Terbaru)",

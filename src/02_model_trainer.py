@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 import os
+import joblib # <--- TAMBAHKAN INI
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
@@ -12,6 +13,7 @@ from src.utils import create_sequences, scale_data, inverse_transform_prediction
 # --- Konfigurasi ---
 DATA_FILE = os.path.join('data', 'simulated_data.csv')
 MODEL_FILE = os.path.join('models', 'lstm_model.keras')
+SCALER_FILE = os.path.join('models', 'scaler.joblib') # <--- FILE SCALER BARU
 N_STEPS_IN = 48  # 4 jam historis
 N_STEPS_OUT = 12 # 60 menit prediksi
 TRAIN_RATIO = 0.8 
@@ -90,6 +92,10 @@ def train_model():
     os.makedirs('models', exist_ok=True)
     model.save(MODEL_FILE)
     print(f"\n✅ Model LSTM berhasil dilatih dan disimpan di {MODEL_FILE}")
+
+    # Simpan Scaler
+    joblib.dump(scaler, SCALER_FILE) # <--- TAMBAHAN KRITIS
+    print(f"✅ Scaler (MinMaxScaler) berhasil disimpan di {SCALER_FILE}")
 
 if __name__ == '__main__':
     train_model()

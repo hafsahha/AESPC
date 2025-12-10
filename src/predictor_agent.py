@@ -3,12 +3,14 @@
 import pandas as pd
 import numpy as np
 import os
+import joblib # <--- TAMBAHKAN INI
 from tensorflow.keras.models import load_model
 from src.utils import scale_data, inverse_transform_prediction
 
 # --- Konfigurasi ---
 DATA_FILE = os.path.join('data', 'simulated_data.csv')
 MODEL_FILE = os.path.join('models', 'lstm_model.keras')
+SCALER_FILE = os.path.join('models', 'scaler.joblib') # <--- DEFINISI SCALER FILE
 N_STEPS_IN = 48
 N_STEPS_OUT = 12 
 TARGET_COMFORT_TIME = '07:00:00' 
@@ -45,8 +47,9 @@ def run_predictor_agent():
     
     try:
         model = load_model(MODEL_FILE)
-    except Exception:
-        print(f"❌ Model tidak ditemukan atau gagal dimuat. Jalankan 02_model_trainer.py terlebih dahulu.")
+        scaler = joblib.load(SCALER_FILE) # <--- MEMUAT SCALER TERSIMPAN
+    except Exception as e:
+        print(f"❌ Aset (Model/Scaler) tidak ditemukan atau gagal dimuat. Pastikan 02_model_trainer.py dijalankan. Error: {e}")
         return
 
     try:
@@ -63,9 +66,8 @@ def run_predictor_agent():
         print(f"❌ Data historis tidak cukup.")
         return
 
-    # 1. Scaling Data (Re-fit scaler dari seluruh dataset untuk konsistensi)
-    scaler, _ = scale_data(df) 
-    scaled_latest_data = scaler.transform(latest_data)
+    # 1. Scaling Data (Gunakan scaler yang dimuat)
+    scaled_latest_data = scaler.transform(latest_data) # <--- HANYA TRANSFORM
     
     # 2. Reshape dan Prediksi
     X_input = scaled_latest_data.reshape((1, N_STEPS_IN, 2))
